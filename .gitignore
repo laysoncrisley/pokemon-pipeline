@@ -1,0 +1,18 @@
+# Camada raw: recriada por `python run_pipeline.py` (JSONs de /pokemon são grandes)
+data/raw/*
+!data/raw/.gitkeep
+
+# Banco DuckDB: gerado pelo pipeline
+warehouse/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
