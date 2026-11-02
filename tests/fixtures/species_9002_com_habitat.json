@@ -9,5 +9,9 @@
   "color": {"name": "blue", "url": "https://example.test/color/2/"},
   "growth_rate": {"name": "slow", "url": "https://example.test/growth/1/"},
   "generation": {"name": "generation-i", "url": "https://example.test/generation/1/"},
-  "evolution_chain": {"url": "https://pokeapi.co/api/v2/evolution-chain/7/"}
+  "evolution_chain": {"url": "https://pokeapi.co/api/v2/evolution-chain/7/"},
+  "genera": [
+    {"genus": "ねずみポケモン", "language": {"name": "ja-hrkt", "url": "https://example.test/language/1/"}},
+    {"genus": "Mouse Pokémon", "language": {"name": "en", "url": "https://example.test/language/9/"}}
+  ]
 }

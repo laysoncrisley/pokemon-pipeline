@@ -94,6 +94,28 @@ def test_species_achata_os_campos_aninhados(carregar_json):
     assert linha["evolution_chain_id"] == 7
 
 
+def test_genus_usa_o_texto_em_ingles_entre_os_idiomas(carregar_json):
+    assert transform.linha_species(carregar_json("species_9002_com_habitat.json"))["genus"] == "Mouse Pokémon"
+
+
+def test_genus_sem_ingles_fica_nulo_em_vez_de_usar_outro_idioma(carregar_json):
+    assert transform.linha_species(carregar_json("species_9001_habitat_nulo.json"))["genus"] is None
+
+
+def test_artwork_e_sprite_vem_de_campos_diferentes(pokemon):
+    linha = transform.linha_pokemon(pokemon)
+    assert linha["artwork_url"] == "https://example.test/artwork/9001.png"
+    assert linha["sprite_url"] == "https://example.test/sprite/9001.png"
+
+
+def test_artwork_e_sprite_nulos_continuam_nulos(pokemon):
+    pokemon["sprites"]["front_default"] = None
+    pokemon["sprites"]["other"]["official-artwork"]["front_default"] = None
+    linha = transform.linha_pokemon(pokemon)
+    assert linha["artwork_url"] is None
+    assert linha["sprite_url"] is None
+
+
 def test_dano_le_so_o_sentido_to(carregar_json):
     assert transform.linhas_dano(carregar_json("type_fogo.json")) == [
         {"attacking_type": "fogo", "defending_type": "voador", "multiplier": 2.0},
@@ -104,6 +126,13 @@ def test_dano_le_so_o_sentido_to(carregar_json):
 
 def test_refined_real_preserva_habitat_nulo_no_banco(con_inventado):
     assert con_inventado.execute("SELECT habitat FROM refined.species").fetchall() == [(None,)]
+
+
+def test_refined_real_grava_genus_nulo_e_urls_das_imagens(con_inventado):
+    assert con_inventado.execute("SELECT genus FROM refined.species").fetchall() == [(None,)]
+    assert con_inventado.execute("SELECT artwork_url, sprite_url FROM refined.pokemon").fetchall() == [
+        ("https://example.test/artwork/9001.png", "https://example.test/sprite/9001.png")
+    ]
 
 
 def test_refined_real_grava_metros_e_kg(con_inventado):

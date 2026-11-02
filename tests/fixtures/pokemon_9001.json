@@ -4,7 +4,11 @@
   "height": 7,
   "weight": 69,
   "base_experience": 64,
-  "sprites": {"front_default": "campo-que-deve-ser-ignorado.png"},
+  "sprites": {
+    "front_default": "https://example.test/sprite/9001.png",
+    "back_default": "campo-que-deve-ser-ignorado.png",
+    "other": {"official-artwork": {"front_default": "https://example.test/artwork/9001.png", "front_shiny": "campo-que-deve-ser-ignorado.png"}}
+  },
   "stats": [
     {"base_stat": 10, "effort": 0, "stat": {"name": "hp", "url": "https://example.test/stat/1/"}},
     {"base_stat": 20, "effort": 0, "stat": {"name": "attack", "url": "https://example.test/stat/2/"}},

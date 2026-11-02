@@ -28,8 +28,14 @@ def extrair_evolution_chain_id(url: str) -> int:
     return int(encontrado.group(1))
 
 
+def extrair_genus(especie: dict) -> str | None:
+    """Texto em inglês de genera[]. Sem entrada em inglês, fica nulo em vez de usar outro idioma."""
+    return next((item["genus"] for item in especie["genera"] if item["language"]["name"] == "en"), None)
+
+
 def linha_pokemon(pokemon: dict) -> dict:
     stats = {item["stat"]["name"]: item["base_stat"] for item in pokemon["stats"]}
+    sprites = pokemon["sprites"]
     return {
         "pokemon_id": pokemon["id"],
         "name": pokemon["name"],
@@ -43,6 +49,8 @@ def linha_pokemon(pokemon: dict) -> dict:
         "special_defense": stats["special-defense"],
         "speed": stats["speed"],
         "total_stats": sum(stats[nome] for nome in STATS),
+        "artwork_url": sprites["other"]["official-artwork"]["front_default"],  # pode ser nulo
+        "sprite_url": sprites["front_default"],  # pode ser nulo
     }
 
 
@@ -60,6 +68,7 @@ def linha_species(especie: dict) -> dict:
         "growth_rate": especie["growth_rate"]["name"],
         "generation": especie["generation"]["name"],
         "evolution_chain_id": extrair_evolution_chain_id(especie["evolution_chain"]["url"]),
+        "genus": extrair_genus(especie),
     }
 
 
@@ -144,11 +153,11 @@ def _tabela(itens: Iterable[dict], extrair: Callable[[dict], Iterable[dict]], co
 
 COLUNAS_POKEMON = [
     "pokemon_id", "name", "height_m", "weight_kg", "base_experience", "hp", "attack",
-    "defense", "special_attack", "special_defense", "speed", "total_stats",
+    "defense", "special_attack", "special_defense", "speed", "total_stats", "artwork_url", "sprite_url",
 ]
 COLUNAS_SPECIES = [
     "species_id", "name", "is_legendary", "is_mythical", "capture_rate", "base_happiness",
-    "habitat", "color", "growth_rate", "generation", "evolution_chain_id",
+    "habitat", "color", "growth_rate", "generation", "evolution_chain_id", "genus",
 ]
 
 
