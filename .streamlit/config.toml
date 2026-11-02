@@ -1,0 +1,4 @@
+# O fundo azul claro do painel é fixo: sem isto, um navegador em modo escuro deixaria o texto claro sobre ele.
+[theme]
+base = "light"
+primaryColor = "#2A75BB"
