@@ -153,6 +153,8 @@ def conferir_marts(con: duckdb.DuckDBPyConnection) -> list[Conferencia]:
                     _valor(con, "SELECT SUM(qtd_pokemon) FROM marts.mart_cadeias_evolucao"), total),
         Conferencia("mart_resumo_geral: total_pokemon",
                     _valor(con, "SELECT total_pokemon FROM marts.mart_resumo_geral"), total),
+        Conferencia("mart_pokedex: linhas",
+                    _valor(con, "SELECT COUNT(*) FROM marts.mart_pokedex"), len(config.POKEMON_IDS)),
     ]
 
 

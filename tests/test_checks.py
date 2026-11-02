@@ -1,7 +1,7 @@
 """A conferência só vale se for capaz de reprovar: estes testes provocam o erro de propósito."""
 import pytest
 
-from src import checks
+from src import build, checks
 
 
 def _resultado(conferencias, descricao):
@@ -21,6 +21,12 @@ def test_filha_orfa_reprova_o_anti_join(con_inventado):
     conferencias = checks.conferir_refined(con_inventado)
     assert not _resultado(conferencias, "Anti-join refined.pokemon_type").ok
     assert not _resultado(conferencias, "refined.pokemon_type: linhas").ok
+
+
+def test_mart_pokedex_com_menos_de_151_linhas_reprova(con_inventado):
+    build.construir_marts(con_inventado)
+    resultado = _resultado(checks.conferir_marts(con_inventado), "mart_pokedex: linhas")
+    assert (resultado.obtido, resultado.esperado, resultado.ok) == (1, 151, False)
 
 
 def test_payload_alterado_na_raw_e_detectado(con_inventado, raw_inventado):

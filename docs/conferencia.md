@@ -43,3 +43,4 @@ Data da extração da API: 2026-11-02.
 | mart_habilidades_mais_comuns: normal + oculta diferente do total | 0 | 0 | OK |
 | mart_cadeias_evolucao: soma de qtd_pokemon | 151 | 151 | OK |
 | mart_resumo_geral: total_pokemon | 151 | 151 | OK |
+| mart_pokedex: linhas | 151 | 151 | OK |

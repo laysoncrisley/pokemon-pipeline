@@ -8,6 +8,7 @@ Todos os valores esperados foram calculados à mão a partir da tabela abaixo.
   3 a3   100 100 100 100 100 100   600  agua         lendário  rare    2       3
   4 a4   100 100 100 100 100 100   600  agua/voador  mítico    (nulo)  3       5
  5-12 a5..a12: hp = total = 110, 120, ... 180, demais 0; normal; comum; sea; chain 5; capture 200
+ Genus "Genus {id}", artwork "art{id}.png" e sprite "spr{id}.png"; o a4 tem os três nulos.
 """
 import duckdb
 import pytest
@@ -20,6 +21,7 @@ MARTS = [
     "mart_habilidades_mais_comuns",
     "mart_habitat",
     "mart_lendarios_vs_comuns",
+    "mart_pokedex",
     "mart_resumo_geral",
     "mart_stats_por_tipo",
     "mart_top10_total_stats",
@@ -35,12 +37,13 @@ def con():
         CREATE TABLE refined.pokemon (
             pokemon_id INTEGER, name VARCHAR, height_m DECIMAL(5, 1), weight_kg DECIMAL(6, 1),
             base_experience INTEGER, hp INTEGER, attack INTEGER, defense INTEGER,
-            special_attack INTEGER, special_defense INTEGER, speed INTEGER, total_stats INTEGER
+            special_attack INTEGER, special_defense INTEGER, speed INTEGER, total_stats INTEGER,
+            artwork_url VARCHAR, sprite_url VARCHAR
         );
         CREATE TABLE refined.species (
             species_id INTEGER, name VARCHAR, is_legendary BOOLEAN, is_mythical BOOLEAN,
             capture_rate INTEGER, base_happiness INTEGER, habitat VARCHAR, color VARCHAR,
-            growth_rate VARCHAR, generation VARCHAR, evolution_chain_id INTEGER
+            growth_rate VARCHAR, generation VARCHAR, evolution_chain_id INTEGER, genus VARCHAR
         );
         CREATE TABLE refined.pokemon_type (pokemon_id INTEGER, slot INTEGER, type_name VARCHAR);
         CREATE TABLE refined.pokemon_ability (pokemon_id INTEGER, ability_name VARCHAR, is_hidden BOOLEAN, slot INTEGER);
@@ -57,8 +60,8 @@ def con():
     ] + [(i, f"a{i}", 60 + 10 * i, 0, 0, 0, 0, 0, 60 + 10 * i) for i in range(5, 13)]
     for id_, nome, hp, atk, dfs, spa, spd, spe, total in pokemons:
         conexao.execute(
-            "INSERT INTO refined.pokemon VALUES (?, ?, 1.0, 1.0, 50, ?, ?, ?, ?, ?, ?, ?)",
-            [id_, nome, hp, atk, dfs, spa, spd, spe, total],
+            "INSERT INTO refined.pokemon VALUES (?, ?, 1.0, 1.0, 50, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [id_, nome, hp, atk, dfs, spa, spd, spe, total, f"art{id_}.png" if id_ != 4 else None, f"spr{id_}.png" if id_ != 4 else None],
         )
 
     especies = [
@@ -69,8 +72,8 @@ def con():
     ] + [(i, False, False, 200, "sea", 5) for i in range(5, 13)]
     for id_, lendario, mitico, captura, habitat, cadeia in especies:
         conexao.execute(
-            "INSERT INTO refined.species VALUES (?, ?, ?, ?, ?, 70, ?, 'cor', 'medio', 'generation-i', ?)",
-            [id_, f"a{id_}", lendario, mitico, captura, habitat, cadeia],
+            "INSERT INTO refined.species VALUES (?, ?, ?, ?, ?, 70, ?, 'cor', 'medio', 'generation-i', ?, ?)",
+            [id_, f"a{id_}", lendario, mitico, captura, habitat, cadeia, f"Genus {id_}" if id_ != 4 else None],
         )
 
     tipos = [(1, 1, "fogo"), (1, 2, "voador"), (2, 1, "fogo"), (3, 1, "agua"), (4, 1, "agua"), (4, 2, "voador")]
@@ -232,3 +235,64 @@ def test_resumo_geral_tem_uma_linha_com_os_kpis(con):
             "maior_total_stats": 600,
         }
     ]
+
+
+def test_pokedex_tem_uma_linha_por_pokemon_mesmo_com_tipo_duplo(con):
+    pokedex = linhas(con, "mart_pokedex")
+    assert [l["pokemon_id"] for l in pokedex] == list(range(1, 13))
+
+
+def test_pokedex_formata_nome_e_numero_no_sql(con):
+    a1 = por_chave(con, "mart_pokedex", "pokemon_id")[1]
+    assert a1["name"] == "A1"
+    assert a1["numero_formatado"] == "#001"
+
+
+def test_pokedex_separa_tipo_1_e_tipo_2_pelo_slot(con):
+    pokedex = por_chave(con, "mart_pokedex", "pokemon_id")
+    assert (pokedex[1]["tipo_1"], pokedex[1]["tipo_2"]) == ("fogo", "voador")
+    assert (pokedex[2]["tipo_1"], pokedex[2]["tipo_2"]) == ("fogo", None)
+
+
+def test_pokedex_traz_stats_e_categoria(con):
+    pokedex = por_chave(con, "mart_pokedex", "pokemon_id")
+    a1 = pokedex[1]
+    assert (a1["hp"], a1["attack"], a1["defense"]) == (10, 20, 30)
+    assert (a1["special_attack"], a1["special_defense"], a1["speed"], a1["total_stats"]) == (40, 50, 60, 210)
+    assert (a1["height_m"], a1["weight_kg"]) == (pytest.approx(1), pytest.approx(1))
+    assert (pokedex[3]["is_legendary"], pokedex[3]["is_mythical"]) == (True, False)
+    assert (pokedex[4]["is_legendary"], pokedex[4]["is_mythical"]) == (False, True)
+
+
+def test_pokedex_mantem_genus_e_imagens_e_preserva_nulos(con):
+    pokedex = por_chave(con, "mart_pokedex", "pokemon_id")
+    assert (pokedex[1]["genus"], pokedex[1]["artwork_url"], pokedex[1]["sprite_url"]) == ("Genus 1", "art1.png", "spr1.png")
+    assert (pokedex[4]["genus"], pokedex[4]["artwork_url"], pokedex[4]["sprite_url"]) == (None, None, None)
+
+
+def test_pokedex_escala_e_o_maior_stat_individual_em_todas_as_linhas(con):
+    # a12 tem hp 180; o total de 600 do a3 não pode virar a escala.
+    assert {l["stat_max_escala"] for l in linhas(con, "mart_pokedex")} == {180}
+
+
+def test_pokedex_escala_olha_os_seis_stats_e_numero_nao_corta_tres_digitos():
+    conexao = duckdb.connect(":memory:")
+    conexao.execute(
+        """
+        CREATE SCHEMA refined;
+        CREATE SCHEMA marts;
+        CREATE TABLE refined.pokemon AS SELECT
+            100 AS pokemon_id, 'mr-mime' AS name, 1.3 AS height_m, 54.5 AS weight_kg, 1 AS hp, 2 AS attack,
+            3 AS defense, 4 AS special_attack, 5 AS special_defense, 77 AS speed, 92 AS total_stats,
+            NULL::VARCHAR AS artwork_url, NULL::VARCHAR AS sprite_url;
+        CREATE TABLE refined.species AS SELECT
+            100 AS species_id, FALSE AS is_legendary, FALSE AS is_mythical, NULL::VARCHAR AS genus;
+        CREATE TABLE refined.pokemon_type AS SELECT 100 AS pokemon_id, 1 AS slot, 'psychic' AS type_name;
+        """
+    )
+    conexao.execute((config.SQL_MARTS_DIR / "mart_pokedex.sql").read_text(encoding="utf-8"))
+    linha = linhas(conexao, "mart_pokedex")[0]
+    conexao.close()
+    assert linha["stat_max_escala"] == 77
+    assert linha["numero_formatado"] == "#100"
+    assert linha["name"] == "Mr-mime"
