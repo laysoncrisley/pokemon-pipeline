@@ -37,6 +37,11 @@ def executar_sql(con: duckdb.DuckDBPyConnection, pasta: Path) -> list[str]:
     return [arquivo.name for arquivo in arquivos]
 
 
+def construir_marts(con: duckdb.DuckDBPyConnection, pasta: Path = config.SQL_MARTS_DIR) -> list[str]:
+    con.execute("CREATE SCHEMA IF NOT EXISTS marts")
+    return executar_sql(con, pasta)
+
+
 def construir_refined(con: duckdb.DuckDBPyConnection, pasta: Path = config.SQL_REFINED_DIR) -> list[str]:
     con.execute("CREATE SCHEMA IF NOT EXISTS refined")
     staging = registrar_staging(con)
