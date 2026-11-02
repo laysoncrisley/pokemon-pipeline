@@ -114,6 +114,20 @@ A cadeia do Eevee aparece com 4 membros, porque Espeon e os demais são de gera�
 ### Médias com 2 casas, calculadas no SQL
 O painel não pode calcular nem arredondar, então o valor já sai pronto do mart.
 
+### `stat_max_escala` vem do SQL
+Barras e radar da Pokédex precisam de um teto, e esse teto é o maior stat individual entre os 151 (`MAX(GREATEST(...)) OVER ()` em `mart_pokedex`). Ele sai do SQL por três motivos:
+
+- **Regra do painel:** achar o maior valor é um cálculo sobre todas as linhas, e o painel não calcula. Se os dados mudarem, a escala muda junto, sem número fixo no código.
+- **Teste:** no SQL, a regra é coberta com dado inventado, inclusive o caso em que o maior stat não é o HP e o caso em que um `total_stats` alto não pode virar escala.
+- **Uma só linha basta:** o valor se repete em todas as linhas para o cartão ler tudo de um único registro, sem consultar outra tabela.
+
+A escala é a mesma para todos, para que a mesma largura de barra signifique o mesmo valor em qualquer Pokémon. Uma escala por Pokémon faria todos parecerem chegar ao máximo.
+
+**Custo aceito:** o valor é 250, o HP do Chansey, um caso isolado (o seguinte é 180, do Cloyster). A mediana do maior stat de cada Pokémon é 100, então a maioria das formas fica pequena no radar.
+
+### Formatação de nome e número no SQL
+`name` com a primeira letra maiúscula e `numero_formatado` (`#025`) saem prontos do mart. O nome da API não é alterado além disso: `mr-mime` vira `Mr-mime`, não "Mr. Mime". Corrigir esses casos exigiria uma lista de exceções, que não foi pedida.
+
 ### Amostras pequenas
 Ice lidera as médias de `total_stats` (514), mas tem só 5 Pokémon, entre eles Articuno e Lapras. Dragon, ghost e steel têm 3, 3 e 2. O painel mostra as quantidades na tabela para que a média não seja lida sozinha.
 
@@ -124,3 +138,15 @@ O código faz apenas `SELECT * FROM marts.<tabela>` com `read_only=True`. Sem gr
 
 ### Conexão aberta só durante a leitura
 O DuckDB no Windows bloqueia o arquivo. Abrir e fechar a cada leitura evita que um painel aberto impeça o `run_pipeline.py` de gravar.
+
+### O que o app da Pokédex faz não é cálculo de indicador
+Os valores chegam prontos de `mart_pokedex`. Sobram só decisões de exibição: o dicionário de cores por tipo, a troca do ponto pela vírgula em altura e peso, e o primeiro ponto repetido para fechar o polígono do radar. A largura das barras é um `calc()` no CSS, com o valor e o `stat_max_escala` do mart, resolvido pelo navegador. Nenhum desses resultados é um número novo mostrado na tela.
+
+### O botão "Buscar" é quem aplica a escolha
+A busca fica em um `st.form`. Fora dele, o Streamlit aplicaria a escolha assim que o selectbox mudasse, e o botão não faria nada.
+
+### Imagens carregadas pelo navegador, com aviso
+O painel usa as URLs da PokeAPI e não guarda imagens. A tag `<object>` mostra o conteúdo interno quando o arquivo não carrega, sem depender de JavaScript, e URL nula nem chega a gerar a tag. Foi conferido em navegador real, com o host das imagens bloqueado e com nulos em uma cópia do banco.
+
+### Tema claro fixado em `.streamlit/config.toml`
+O fundo azul claro é fixo no CSS. Como precaução, o tema claro também é fixado para o modo escuro do navegador não deixar o texto claro sobre esse fundo. O painel foi aberto em um navegador em modo escuro e o texto continuou escuro. O arquivo só vale ao rodar o Streamlit a partir da raiz do projeto.

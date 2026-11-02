@@ -39,8 +39,8 @@ flowchart LR
 | `raw.pokemon` | um arquivo `pokemon/{id}.json` | 151 |
 | `raw.pokemon_species` | um arquivo `pokemon_species/{id}.json` | 151 |
 | `raw.type` | um arquivo `type/{name}.json` | 17 |
-| `refined.pokemon` | um Pokémon | 151 |
-| `refined.species` | uma espécie | 151 |
+| `refined.pokemon` | um Pokémon, com `artwork_url` e `sprite_url` (nuláveis) | 151 |
+| `refined.species` | uma espécie, com `genus` em inglês (nulável) | 151 |
 | `refined.pokemon_type` | um tipo de um Pokémon (`pokemon_id`, `slot`, `type_name`) | 218 |
 | `refined.pokemon_ability` | uma habilidade de um Pokémon (`pokemon_id`, `ability_name`, `is_hidden`, `slot`) | 395 |
 | `refined.pokemon_move` | uma forma de um Pokémon aprender um golpe em Red/Blue (`pokemon_id`, `move_name`, `learn_method`, `min_level`) | 4.128 |
@@ -53,6 +53,7 @@ flowchart LR
 | `marts.mart_habilidades_mais_comuns` | uma habilidade do top 15 | 15 |
 | `marts.mart_cadeias_evolucao` | uma cadeia de evolução | 78 |
 | `marts.mart_resumo_geral` | o conjunto de KPIs | 1 |
+| `marts.mart_pokedex` | um Pokémon, com tudo o que o cartão da Pokédex exibe | 151 |
 
 ## Indicadores
 
@@ -66,6 +67,18 @@ flowchart LR
 | Habilidades | Quais as 15 habilidades em mais Pokémon, como normal e como oculta? | [mart_habilidades_mais_comuns.sql](sql/marts/mart_habilidades_mais_comuns.sql) |
 | Cadeias de evolução | Quantos Pokémon cada cadeia tem e qual o maior `total_stats`? | [mart_cadeias_evolucao.sql](sql/marts/mart_cadeias_evolucao.sql) |
 | Resumo geral | Qual o retrato geral em uma linha? | [mart_resumo_geral.sql](sql/marts/mart_resumo_geral.sql) |
+| Pokédex | Como é o cartão de cada Pokémon, com tudo pronto para exibir? | [mart_pokedex.sql](sql/marts/mart_pokedex.sql) |
+
+## Dashboard
+
+`streamlit run dashboard/app.py` abre um painel com duas abas:
+
+- **Pokédex** (aba inicial): cartão de um Pokémon, escolhido na busca com o botão "Buscar" (padrão: Pikachu). À esquerda, radar e barras dos 6 stats; no centro, nome, tipos, número, selo de lendário ou mítico, altura, peso e `genus`; à direita, artwork e sprite. Tudo vem de `mart_pokedex`.
+- **Indicadores**: os KPIs, filtros e gráficos dos demais marts.
+
+As imagens não ficam no projeto: `mart_pokedex` guarda as URLs informadas pela PokeAPI e quem baixa é o navegador, **então é preciso internet para elas aparecerem**. Sem internet, ou com URL nula, o cartão mostra um aviso discreto e o restante continua funcionando.
+
+Os nomes têm só a primeira letra em maiúscula, como o dado da API: aparecem `Mr-mime`, `Nidoran-f` e `Farfetchd`.
 
 ## Decisões sobre o dado
 
@@ -78,6 +91,7 @@ O motivo de cada decisão está em [docs/decisoes.md](docs/decisoes.md). As prin
 - **Só os 17 tipos dos 151.** Além de `unknown`, `shadow` e `stellar`, fica de fora `dark`. Ghost e psychic aparecem com uma fraqueza a menos do que têm no jogo.
 - **`habitat` nulo continua nulo.** Nos 151 de hoje nenhum vem nulo, então a linha "sem informação" não aparece no resultado real; ela é coberta por teste.
 - **Empate no top 15 de habilidades.** Oito empatam com 6 Pokémon e o corte é alfabético: `rivalry`, `shed-skin`, `static`, `sturdy` e `unnerve` ficam de fora.
+- **Escala única na Pokédex.** Barras e radar vão de 0 a `stat_max_escala` (250, o HP do Chansey), calculado no SQL, para comparar Pokémon entre si. Por isso a maioria ocupa menos da metade da escala.
 - **A camada raw fica fora do git.** São cerca de 48 MB, recriados por `python run_pipeline.py`.
 
 ## Como rodar do zero
@@ -113,6 +127,7 @@ Observações:
 
 - A partir da segunda vez, o pipeline usa o cache em `data/raw`. Para baixar tudo de novo: `python run_pipeline.py --refresh`.
 - Os testes não usam internet nem o banco do projeto: `tests/conftest.py` faz o teste falhar se tentar qualquer um dos dois.
+- O painel lê só o banco local, mas as imagens da aba Pokédex precisam de internet (ver [Dashboard](#dashboard)).
 - Se o PowerShell bloquear a ativação do venv, rode antes `Set-ExecutionPolicy -Scope Process RemoteSigned`.
 
 **Onde já foi testado:** Windows 10 com Python 3.14 e 3.12. Linux, Mac e Python 3.10 ainda não foram executados.
@@ -160,6 +175,7 @@ Contagens antes e depois de cada camada, copiadas de [docs/conferencia.md](docs/
 | mart_habilidades_mais_comuns: normal + oculta diferente do total | 0 | 0 | OK |
 | mart_cadeias_evolucao: soma de qtd_pokemon | 151 | 151 | OK |
 | mart_resumo_geral: total_pokemon | 151 | 151 | OK |
+| mart_pokedex: linhas | 151 | 151 | OK |
 
 ## Onde a IA errou ou assumiu algo
 
@@ -172,6 +188,9 @@ O projeto foi construído com ajuda de IA (Claude Code). Estes são os casos rea
 - **Golpes únicos em `red-blue`.** A expectativa era de que filtrar a versão resolvesse a repetição por Pokémon + golpe + método. A contagem mostrou 101 combinações em mais de um nível, como Electrode com `sonic-boom`. Não é duplicata, e `min_level` precisa ficar na chave.
 - **Métodos de aprendizado.** A contagem por método revelou `stadium-surfing-pikachu`, além de `level-up` e `machine`.
 - **"Só os tipos mudaram."** O enunciado alertava para os tipos atuais. Ao abrir o JSON, a IA viu que o problema é mais amplo: `past_stats` existe nos 151 e `past_damage_relations` em 7 tipos. Stats e relações de dano também são atuais. Exemplo: ghost não afetava psychic na 1ª geração e hoje causa 2x.
+- **Imagem e `genus` nulos.** O pedido da Pokédex previa nulos nesses campos. Contando os 151, não há nenhum `artwork_url`, `sprite_url` ou `genus` nulo. O tratamento foi mantido e testado com dado inventado e com uma cópia do banco em que os campos do Pikachu foram anulados, porque com o dado real esse caminho nunca executaria.
+- **Primeira letra maiúscula não basta para todos os nomes.** A regra pedida funciona para Pikachu, mas o nome da API vira `Mr-mime`, `Nidoran-f`, `Nidoran-m` e `Farfetchd`. A regra foi mantida como pedida, e os nomes continuam únicos, o que a busca exige.
+- **Escala das barras.** O maior stat individual é um caso isolado: o HP 250 do Chansey, seguido de 180 (Cloyster). A mediana do maior stat de cada Pokémon é 100, então a barra mais longa de um Pokémon típico ocupa só 40% do trilho. Mewtwo chega a 154, cerca de 62%. O motivo de manter essa escala está em [docs/decisoes.md](docs/decisoes.md).
 
 **Riscos encontrados contando ou olhando o dado**
 
@@ -188,6 +207,8 @@ Os JSONs foram baixados e abertos antes de escrever as transformações, então 
 
 - **Commit errado.** Um `git add -A` colocou os testes dentro do commit de `refined`, o que quebraria a regra de um commit por etapa. Percebido com `git show --stat` e separado antes de continuar.
 - **"O servidor subiu" não prova que o painel funciona.** O Streamlit só executa o script quando uma sessão se conecta, e a primeira captura de tela pegou apenas o esqueleto da página. A verificação passou a executar o script com `AppTest`, incluindo os filtros, e a olhar o painel renderizado em um navegador real.
+- **Layout que só a captura de tela mostrou.** Na primeira versão da Pokédex, as medições automáticas passaram (cores aplicadas, nenhuma rolagem horizontal, nenhum erro), mas a captura mostrou o KPI "Maior total de stats" cortado como `mewtw…`, a legenda pálida porque o CSS não alcançava o elemento interno, e o sprite abaixo da dobra em 768 px. Os três foram corrigidos.
+- **Falso alarme no teste sem imagens.** Com as imagens bloqueadas, o radar apareceu vazio na captura e parecia um defeito. Essa captura foi tirada após uma espera fixa de 3 segundos, com outra aba aberta. Repetido em uma página única, esperando o gráfico aparecer, o radar renderizou normalmente. A causa exata não foi isolada.
 
 ```
 ### Conferência feita por mim (autor)
