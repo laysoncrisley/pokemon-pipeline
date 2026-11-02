@@ -101,8 +101,8 @@ Requer Python 3.10 ou mais novo e internet na primeira execução.
 **Windows (PowerShell)**
 
 ```powershell
-git clone <repo>
-cd <pasta>
+git clone https://github.com/laysoncrisley/pokemon-pipeline.git
+cd pokemon-pipeline
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
@@ -114,7 +114,7 @@ streamlit run dashboard/app.py
 **Linux/Mac**
 
 ```bash
-git clone <repo> && cd <pasta>
+git clone https://github.com/laysoncrisley/pokemon-pipeline.git && cd pokemon-pipeline
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
