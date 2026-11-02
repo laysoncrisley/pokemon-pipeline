@@ -190,8 +190,13 @@ Os JSONs foram baixados e abertos antes de escrever as transformações, então 
 - **"O servidor subiu" não prova que o painel funciona.** O Streamlit só executa o script quando uma sessão se conecta, e a primeira captura de tela pegou apenas o esqueleto da página. A verificação passou a executar o script com `AppTest`, incluindo os filtros, e a olhar o painel renderizado em um navegador real.
 
 ```
-TODO (autor):
-- [ ] Acrescentar aqui o que eu mesmo conferi e encontrei:
-- [ ] Conferi alguns valores à mão contra a fonte? (quais, e o resultado)
-- [ ] Concordo com as decisões de docs/decisoes.md? (principalmente red-blue e dados atuais)
-```
+### Conferência feita por mim (autor)
+
+- **Contagem de tipos:** rodei uma consulta direto no banco e encontrei 84 Pokémon com 1 tipo e 67 com 2 tipos. A conta 84 + 67 × 2 = 218 bate com as 218 linhas de `refined.pokemon_type` e com o número registrado em `docs/conferencia.md`. Isso confirma que a transformação não duplicou nem perdeu tipos.
+- **Tipo `dark`:** o enunciado que passei para a IA citava só `unknown`, `shadow` e `stellar` como tipos fora do escopo. Listei todos os tipos no banco e apareceram 17, nenhum `dark`, que só surgiu na 2ª geração. A IA percebeu isso durante o perfil dos dados, mas a suposição inicial (minha e dela) estava incompleta. Consequência: em `mart_fraquezas_por_tipo`, ghost e psychic aparecem com uma fraqueza a menos do que têm no jogo atual.
+- **Habitat nulo:** eu esperava encontrar Pokémon sem habitat e pedi uma linha "sem informação" no indicador de habitat. Nos 151 Pokémon reais nenhum habitat é nulo, então essa linha não aparece no resultado. A regra continua no SQL e é coberta por teste com dado inventado.
+- **Comando de conferência com erro:** o primeiro comando que a IA me passou para conferir o tipo `dark` quebrou no PowerShell, por causa das aspas em `'dark'` (Binder Error). Troquei por uma consulta que lista todos os tipos com a contagem: apareceram 17 tipos, nenhum `dark`, e a soma da coluna deu 218, igual a `refined.pokemon_type`.
+
+Comando que usei para conferir:
+
+    python -c "import duckdb; c=duckdb.connect('warehouse/pokemon.duckdb', read_only=True); print(c.sql('select qtd_tipos, count(*) as pokemons from (select pokemon_id, count(*) as qtd_tipos from refined.pokemon_type group by 1) group by 1 order by 1')); print(c.sql('select type_name, count(*) as pokemons from refined.pokemon_type group by 1 order by 1').show(max_rows=30))"
