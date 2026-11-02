@@ -80,6 +80,14 @@ As imagens não ficam no projeto: `mart_pokedex` guarda as URLs informadas pela 
 
 Os nomes têm só a primeira letra em maiúscula, como o dado da API: aparecem `Mr-mime`, `Nidoran-f` e `Farfetchd`.
 
+## Dashboard online
+
+link: TODO
+
+O app roda no Streamlit Community Cloud, onde o banco e a camada raw não existem, porque ficam fora do git. Por isso, no primeiro acesso, o app baixa os dados da PokeAPI e roda o pipeline completo, o que leva cerca de 2 minutos. Os acessos seguintes usam o banco já criado, até o servidor reiniciar.
+
+A versão do Python é escolhida em **Advanced settings** ao publicar, porque o Community Cloud não lê `runtime.txt`. Use 3.12, que é o padrão da plataforma.
+
 ## Documentação
 
 - [docs/SPEC.md](docs/SPEC.md): especificação etapa por etapa e como cada etapa foi verificada.

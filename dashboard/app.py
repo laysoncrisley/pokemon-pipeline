@@ -4,6 +4,8 @@ Regra do projeto: nenhum cálculo aqui. Todo número vem pronto de um SELECT * F
 os filtros só escolhem linhas ou qual coluna mostrar. Indicador novo nasce em sql/marts.
 Cores, CSS e rótulos daqui são estilo. A largura das barras de stats é um calc() que o navegador resolve.
 """
+import os
+import sys
 from html import escape
 from pathlib import Path
 
@@ -13,7 +15,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-BANCO = Path(__file__).resolve().parents[1] / "warehouse" / "pokemon.duckdb"
+# O Streamlit só coloca dashboard/ no sys.path; run_pipeline.py e src/ ficam na raiz.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import run_pipeline
+from src import checks, config, extract
+
+BANCO = config.WAREHOUSE_DB
 
 COR_SERIE_1 = "#2a78d6"
 COR_SERIE_2 = "#eb6834"
@@ -108,6 +116,19 @@ CSS = """
 .artwork .aviso-imagem { padding-top: 40%; }
 </style>
 """
+
+
+@st.cache_resource(show_spinner=False)
+def preparar_banco() -> None:
+    """Na primeira sessão do servidor, cria o banco se ele não existir. Sessões simultâneas esperam a mesma execução."""
+    if BANCO.exists():
+        return
+    # Monta em um arquivo à parte: uma queda no meio não deixa um banco incompleto com o nome definitivo.
+    temporario = BANCO.with_suffix(".tmp")
+    for sobra in BANCO.parent.glob(f"{temporario.name}*"):
+        sobra.unlink()
+    run_pipeline.executar(banco=temporario)
+    os.replace(temporario, BANCO)
 
 
 def ler_mart(tabela: str) -> pd.DataFrame:
@@ -247,8 +268,12 @@ st.markdown(CSS, unsafe_allow_html=True)
 st.title("Pokémon da 1ª geração")
 st.caption("Fonte: PokeAPI. Todos os números vêm da camada marts do DuckDB; o painel não calcula nada.")
 
-if not BANCO.exists():
-    st.error("Banco não encontrado. Rode primeiro: python run_pipeline.py")
+try:
+    with st.spinner("Preparando os dados pela primeira vez, leva cerca de 2 minutos..."):
+        preparar_banco()
+except (extract.ErroDeDownload, checks.ErroDeConferencia) as erro:
+    # Exceção não entra no cache: o próximo acesso tenta de novo, aproveitando o que já foi baixado.
+    st.error(f"Não foi possível preparar os dados. Recarregue a página para tentar de novo.\n\n{erro}")
     st.stop()
 
 resumo = ler_mart("mart_resumo_geral").iloc[0]

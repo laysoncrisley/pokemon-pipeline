@@ -1,24 +1,21 @@
 """Ponto de entrada: python run_pipeline.py [--refresh]"""
 import argparse
 import sys
+from pathlib import Path
 
 import duckdb
 
 from src import build, checks, config, extract, load_raw
 
 
-def main() -> None:
-    sys.stdout.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="Pipeline Pokémon: extract -> raw -> refined -> marts -> checks")
-    parser.add_argument("--refresh", action="store_true", help="ignora o cache e baixa tudo de novo da API")
-    args = parser.parse_args()
-
+def executar(refresh: bool = False, banco: Path = config.WAREHOUSE_DB) -> None:
+    """Roda todas as etapas. Levanta ErroDeDownload ou ErroDeConferencia se algo falhar."""
     print("[1/5] extract: PokeAPI -> data/raw")
-    resumo = extract.executar(refresh=args.refresh)
+    resumo = extract.executar(refresh=refresh)
     print(f"      {resumo['baixados']} baixados, {resumo['cache']} do cache, {resumo['total']} no total")
 
-    config.WAREHOUSE_DB.parent.mkdir(parents=True, exist_ok=True)
-    with duckdb.connect(str(config.WAREHOUSE_DB)) as con:
+    banco.parent.mkdir(parents=True, exist_ok=True)
+    with duckdb.connect(str(banco)) as con:
         print("[2/5] raw: data/raw -> schema raw")
         for tabela, linhas in load_raw.executar(con).items():
             print(f"      {tabela}: {linhas} linhas")
@@ -32,11 +29,20 @@ def main() -> None:
             print(f"      {arquivo}")
 
         print("[5/5] checks: contagens entre camadas")
-        try:
-            checks.executar(con)
-        except checks.ErroDeConferencia as erro:
-            sys.exit(str(erro))
+        checks.executar(con)
         print(f"      relatório em {config.CONFERENCIA_PATH.relative_to(config.ROOT).as_posix()}")
+
+
+def main() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")
+    parser = argparse.ArgumentParser(description="Pipeline Pokémon: extract -> raw -> refined -> marts -> checks")
+    parser.add_argument("--refresh", action="store_true", help="ignora o cache e baixa tudo de novo da API")
+    args = parser.parse_args()
+
+    try:
+        executar(refresh=args.refresh)
+    except checks.ErroDeConferencia as erro:
+        sys.exit(str(erro))
 
 
 if __name__ == "__main__":
