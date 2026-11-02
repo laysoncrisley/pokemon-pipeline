@@ -1,0 +1,13 @@
+{
+  "id": 9001,
+  "name": "fakemon",
+  "is_legendary": false,
+  "is_mythical": true,
+  "capture_rate": 45,
+  "base_happiness": 70,
+  "habitat": null,
+  "color": {"name": "green", "url": "https://example.test/color/5/"},
+  "growth_rate": {"name": "medium-slow", "url": "https://example.test/growth/4/"},
+  "generation": {"name": "generation-i", "url": "https://example.test/generation/1/"},
+  "evolution_chain": {"url": "https://pokeapi.co/api/v2/evolution-chain/42/"}
+}

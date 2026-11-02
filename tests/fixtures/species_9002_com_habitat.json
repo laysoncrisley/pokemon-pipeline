@@ -1,0 +1,13 @@
+{
+  "id": 9002,
+  "name": "outromon",
+  "is_legendary": true,
+  "is_mythical": false,
+  "capture_rate": 3,
+  "base_happiness": 0,
+  "habitat": {"name": "rare", "url": "https://example.test/habitat/5/"},
+  "color": {"name": "blue", "url": "https://example.test/color/2/"},
+  "growth_rate": {"name": "slow", "url": "https://example.test/growth/1/"},
+  "generation": {"name": "generation-i", "url": "https://example.test/generation/1/"},
+  "evolution_chain": {"url": "https://pokeapi.co/api/v2/evolution-chain/7/"}
+}

@@ -1,0 +1,48 @@
+{
+  "id": 9001,
+  "name": "fakemon",
+  "height": 7,
+  "weight": 69,
+  "base_experience": 64,
+  "sprites": {"front_default": "campo-que-deve-ser-ignorado.png"},
+  "stats": [
+    {"base_stat": 10, "effort": 0, "stat": {"name": "hp", "url": "https://example.test/stat/1/"}},
+    {"base_stat": 20, "effort": 0, "stat": {"name": "attack", "url": "https://example.test/stat/2/"}},
+    {"base_stat": 30, "effort": 0, "stat": {"name": "defense", "url": "https://example.test/stat/3/"}},
+    {"base_stat": 40, "effort": 1, "stat": {"name": "special-attack", "url": "https://example.test/stat/4/"}},
+    {"base_stat": 50, "effort": 0, "stat": {"name": "special-defense", "url": "https://example.test/stat/5/"}},
+    {"base_stat": 60, "effort": 0, "stat": {"name": "speed", "url": "https://example.test/stat/6/"}}
+  ],
+  "types": [
+    {"slot": 1, "type": {"name": "fogo", "url": "https://example.test/type/1/"}},
+    {"slot": 2, "type": {"name": "voador", "url": "https://example.test/type/2/"}}
+  ],
+  "abilities": [
+    {"is_hidden": false, "slot": 1, "ability": {"name": "chama", "url": "https://example.test/ability/1/"}},
+    {"is_hidden": true, "slot": 3, "ability": {"name": "vento-oculto", "url": "https://example.test/ability/2/"}}
+  ],
+  "moves": [
+    {
+      "move": {"name": "tackle", "url": "https://example.test/move/1/"},
+      "version_group_details": [
+        {"level_learned_at": 1, "order": null, "version_group": {"name": "red-blue", "url": "https://example.test/vg/1/"}, "move_learn_method": {"name": "level-up", "url": "https://example.test/m/1/"}},
+        {"level_learned_at": 1, "order": null, "version_group": {"name": "red-blue", "url": "https://example.test/vg/1/"}, "move_learn_method": {"name": "level-up", "url": "https://example.test/m/1/"}},
+        {"level_learned_at": 1, "order": null, "version_group": {"name": "yellow", "url": "https://example.test/vg/2/"}, "move_learn_method": {"name": "level-up", "url": "https://example.test/m/1/"}}
+      ]
+    },
+    {
+      "move": {"name": "leer", "url": "https://example.test/move/2/"},
+      "version_group_details": [
+        {"level_learned_at": 1, "order": null, "version_group": {"name": "red-blue", "url": "https://example.test/vg/1/"}, "move_learn_method": {"name": "level-up", "url": "https://example.test/m/1/"}},
+        {"level_learned_at": 15, "order": null, "version_group": {"name": "red-blue", "url": "https://example.test/vg/1/"}, "move_learn_method": {"name": "level-up", "url": "https://example.test/m/1/"}},
+        {"level_learned_at": 0, "order": null, "version_group": {"name": "red-blue", "url": "https://example.test/vg/1/"}, "move_learn_method": {"name": "machine", "url": "https://example.test/m/4/"}}
+      ]
+    },
+    {
+      "move": {"name": "golpe-so-de-outra-versao", "url": "https://example.test/move/3/"},
+      "version_group_details": [
+        {"level_learned_at": 5, "order": null, "version_group": {"name": "sword-shield", "url": "https://example.test/vg/3/"}, "move_learn_method": {"name": "level-up", "url": "https://example.test/m/1/"}}
+      ]
+    }
+  ]
+}

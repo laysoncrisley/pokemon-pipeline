@@ -1,0 +1,13 @@
+{
+  "id": 1,
+  "name": "fogo",
+  "damage_relations": {
+    "double_damage_to": [{"name": "voador", "url": "https://example.test/type/2/"}],
+    "half_damage_to": [{"name": "fogo", "url": "https://example.test/type/1/"}, {"name": "dark", "url": "https://example.test/type/3/"}],
+    "no_damage_to": [],
+    "double_damage_from": [{"name": "voador", "url": "https://example.test/type/2/"}],
+    "half_damage_from": [{"name": "fogo", "url": "https://example.test/type/1/"}],
+    "no_damage_from": [{"name": "dark", "url": "https://example.test/type/3/"}]
+  },
+  "past_damage_relations": []
+}
