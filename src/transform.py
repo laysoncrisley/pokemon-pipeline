@@ -63,6 +63,79 @@ def linha_species(especie: dict) -> dict:
     }
 
 
+def linhas_tipo(pokemon: dict) -> list[dict]:
+    return [
+        {"pokemon_id": pokemon["id"], "slot": item["slot"], "type_name": item["type"]["name"]}
+        for item in pokemon["types"]
+    ]
+
+
+def linhas_habilidade(pokemon: dict) -> list[dict]:
+    return [
+        {
+            "pokemon_id": pokemon["id"],
+            "ability_name": item["ability"]["name"],
+            "is_hidden": item["is_hidden"],
+            "slot": item["slot"],
+        }
+        for item in pokemon["abilities"]
+    ]
+
+
+def contar_golpes_brutos(pokemon: dict) -> int:
+    """Linhas que existiriam sem a regra: uma por golpe, versão e método."""
+    return sum(len(golpe["version_group_details"]) for golpe in pokemon["moves"])
+
+
+def contar_golpes_do_grupo(pokemon: dict, version_group: str) -> int:
+    """Linhas do version_group antes do distinto."""
+    return sum(
+        detalhe["version_group"]["name"] == version_group
+        for golpe in pokemon["moves"]
+        for detalhe in golpe["version_group_details"]
+    )
+
+
+def linhas_golpe(pokemon: dict, version_group: str) -> list[dict]:
+    """Só os detalhes do version_group pedido, distintos por golpe, método e nível.
+
+    O mesmo golpe em níveis diferentes continua como duas linhas: são dois
+    momentos de aprendizado no jogo, não uma repetição.
+    """
+    distintos = dict.fromkeys(
+        (golpe["move"]["name"], detalhe["move_learn_method"]["name"], detalhe["level_learned_at"])
+        for golpe in pokemon["moves"]
+        for detalhe in golpe["version_group_details"]
+        if detalhe["version_group"]["name"] == version_group
+    )
+    return [
+        {"pokemon_id": pokemon["id"], "move_name": nome, "learn_method": metodo, "min_level": nivel}
+        for nome, metodo, nivel in distintos
+    ]
+
+
+MULTIPLICADORES_CAUSADOS = {"double_damage_to": 2.0, "half_damage_to": 0.5, "no_damage_to": 0.0}
+MULTIPLICADORES_RECEBIDOS = {"double_damage_from": 2.0, "half_damage_from": 0.5, "no_damage_from": 0.0}
+
+
+def linhas_dano(tipo: dict) -> list[dict]:
+    """Usa só o sentido *_to: ler também *_from gravaria cada relação duas vezes."""
+    return [
+        {"attacking_type": tipo["name"], "defending_type": alvo["name"], "multiplier": multiplicador}
+        for campo, multiplicador in MULTIPLICADORES_CAUSADOS.items()
+        for alvo in tipo["damage_relations"][campo]
+    ]
+
+
+def linhas_dano_recebido(tipo: dict) -> list[dict]:
+    """Mesma relação lida pelo sentido *_from. Serve só para conferir linhas_dano."""
+    return [
+        {"attacking_type": origem["name"], "defending_type": tipo["name"], "multiplier": multiplicador}
+        for campo, multiplicador in MULTIPLICADORES_RECEBIDOS.items()
+        for origem in tipo["damage_relations"][campo]
+    ]
+
+
 def _tabela(itens: Iterable[dict], extrair: Callable[[dict], Iterable[dict]], colunas: list[str]) -> pd.DataFrame:
     linhas = [linha for item in itens for linha in extrair(item)]
     # object evita que o pandas troque None por NaN ou infira o tipo pela amostra.
@@ -85,3 +158,23 @@ def tabela_pokemon(pokemons: Iterable[dict]) -> pd.DataFrame:
 
 def tabela_species(especies: Iterable[dict]) -> pd.DataFrame:
     return _tabela(especies, lambda e: [linha_species(e)], COLUNAS_SPECIES)
+
+
+def tabela_tipos(pokemons: Iterable[dict]) -> pd.DataFrame:
+    return _tabela(pokemons, linhas_tipo, ["pokemon_id", "slot", "type_name"])
+
+
+def tabela_habilidades(pokemons: Iterable[dict]) -> pd.DataFrame:
+    return _tabela(pokemons, linhas_habilidade, ["pokemon_id", "ability_name", "is_hidden", "slot"])
+
+
+def tabela_golpes(pokemons: Iterable[dict], version_group: str) -> pd.DataFrame:
+    return _tabela(
+        pokemons,
+        lambda p: linhas_golpe(p, version_group),
+        ["pokemon_id", "move_name", "learn_method", "min_level"],
+    )
+
+
+def tabela_dano(tipos: Iterable[dict]) -> pd.DataFrame:
+    return _tabela(tipos, linhas_dano, ["attacking_type", "defending_type", "multiplier"])

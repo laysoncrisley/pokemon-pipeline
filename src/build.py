@@ -9,17 +9,20 @@ import duckdb
 from src import config, transform
 
 
-def _payloads(con: duckdb.DuckDBPyConnection, tabela: str) -> list[dict]:
+def payloads(con: duckdb.DuckDBPyConnection, tabela: str) -> list[dict]:
     return [json.loads(linha[0]) for linha in con.execute(f"SELECT payload FROM raw.{tabela} ORDER BY 1").fetchall()]
 
 
-def registrar_staging(con: duckdb.DuckDBPyConnection) -> dict:
+def registrar_staging(con: duckdb.DuckDBPyConnection, version_group: str = config.VERSION_GROUP_GOLPES) -> dict:
     """Publica o JSON achatado como views stg_* que os .sql de refined consomem."""
-    pokemons = _payloads(con, "pokemon")
-    especies = _payloads(con, "pokemon_species")
+    pokemons = payloads(con, "pokemon")
     staging = {
         "stg_pokemon": transform.tabela_pokemon(pokemons),
-        "stg_species": transform.tabela_species(especies),
+        "stg_species": transform.tabela_species(payloads(con, "pokemon_species")),
+        "stg_pokemon_type": transform.tabela_tipos(pokemons),
+        "stg_pokemon_ability": transform.tabela_habilidades(pokemons),
+        "stg_pokemon_move": transform.tabela_golpes(pokemons, version_group),
+        "stg_type_damage": transform.tabela_dano(payloads(con, "type")),
     }
     for nome, tabela in staging.items():
         con.register(nome, tabela)
