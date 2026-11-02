@@ -217,7 +217,6 @@ Os JSONs foram baixados e abertos antes de escrever as transformações, então 
 - **Layout que só a captura de tela mostrou.** Na primeira versão da Pokédex, as medições automáticas passaram (cores aplicadas, nenhuma rolagem horizontal, nenhum erro), mas a captura mostrou o KPI "Maior total de stats" cortado como `mewtw…`, a legenda pálida porque o CSS não alcançava o elemento interno, e o sprite abaixo da dobra em 768 px. Os três foram corrigidos.
 - **Falso alarme no teste sem imagens.** Com as imagens bloqueadas, o radar apareceu vazio na captura e parecia um defeito. Essa captura foi tirada após uma espera fixa de 3 segundos, com outra aba aberta. Repetido em uma página única, esperando o gráfico aparecer, o radar renderizou normalmente. A causa exata não foi isolada.
 
-```
 ### Conferência feita por mim (autor)
 
 - **Contagem de tipos:** rodei uma consulta direto no banco e encontrei 84 Pokémon com 1 tipo e 67 com 2 tipos. A conta 84 + 67 × 2 = 218 bate com as 218 linhas de `refined.pokemon_type` e com o número registrado em `docs/conferencia.md`. Isso confirma que a transformação não duplicou nem perdeu tipos.
