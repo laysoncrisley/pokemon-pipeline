@@ -126,6 +126,36 @@ def conferir_refined(con: duckdb.DuckDBPyConnection, version_group: str = config
     ]
 
 
+def conferir_marts(con: duckdb.DuckDBPyConnection) -> list[Conferencia]:
+    """Cada mart precisa fechar com a refined de origem: JOIN errado aparece aqui."""
+    total = _valor(con, "SELECT COUNT(*) FROM refined.pokemon")
+    return [
+        Conferencia("mart_stats_por_tipo: soma de qtd_pokemon (linhas de pokemon_type)",
+                    _valor(con, "SELECT SUM(qtd_pokemon) FROM marts.mart_stats_por_tipo"),
+                    _valor(con, "SELECT COUNT(*) FROM refined.pokemon_type")),
+        Conferencia("mart_top10_total_stats: Pokémon distintos",
+                    _valor(con, "SELECT COUNT(DISTINCT pokemon_id) FROM marts.mart_top10_total_stats"), 10),
+        Conferencia("mart_lendarios_vs_comuns: soma de qtd_pokemon",
+                    _valor(con, "SELECT SUM(qtd_pokemon) FROM marts.mart_lendarios_vs_comuns"), total),
+        Conferencia("mart_fraquezas_por_tipo: soma das relações (linhas de type_damage)",
+                    _valor(con, "SELECT SUM(qtd_causam_2x + qtd_causam_0_5x + qtd_causam_0x) FROM marts.mart_fraquezas_por_tipo"),
+                    _valor(con, "SELECT COUNT(*) FROM refined.type_damage")),
+        Conferencia("mart_habitat: soma de qtd_pokemon",
+                    _valor(con, "SELECT SUM(qtd_pokemon) FROM marts.mart_habitat"), total),
+        Conferencia("mart_habitat: Pokémon na linha 'sem informação' (habitat nulo em refined.species)",
+                    _valor(con, "SELECT COALESCE(SUM(qtd_pokemon), 0) FROM marts.mart_habitat WHERE habitat = 'sem informação'"),
+                    _valor(con, "SELECT COUNT(*) FROM refined.species WHERE habitat IS NULL")),
+        Conferencia("mart_habilidades_mais_comuns: linhas",
+                    _valor(con, "SELECT COUNT(*) FROM marts.mart_habilidades_mais_comuns"), 15),
+        Conferencia("mart_habilidades_mais_comuns: normal + oculta diferente do total",
+                    _valor(con, "SELECT COUNT(*) FROM marts.mart_habilidades_mais_comuns WHERE qtd_como_normal + qtd_como_oculta <> qtd_pokemon"), 0),
+        Conferencia("mart_cadeias_evolucao: soma de qtd_pokemon",
+                    _valor(con, "SELECT SUM(qtd_pokemon) FROM marts.mart_cadeias_evolucao"), total),
+        Conferencia("mart_resumo_geral: total_pokemon",
+                    _valor(con, "SELECT total_pokemon FROM marts.mart_resumo_geral"), total),
+    ]
+
+
 def data_da_extracao(raw_dir: Path = config.RAW_DIR) -> str:
     entradas = json.loads((raw_dir / config.MANIFEST_PATH.name).read_text(encoding="utf-8"))
     datas = sorted({entrada["baixado_em"][:10] for entrada in entradas})
@@ -167,7 +197,7 @@ def validar(conferencias: list[Conferencia]) -> None:
 
 def executar(con: duckdb.DuckDBPyConnection) -> list[Conferencia]:
     """Confere, imprime e grava o relatório antes de parar, para o erro ficar registrado."""
-    conferencias = conferir_raw(con) + conferir_refined(con)
+    conferencias = conferir_raw(con) + conferir_refined(con) + conferir_marts(con)
     imprimir(conferencias)
     gravar_relatorio(conferencias, data_da_extracao())
     validar(conferencias)

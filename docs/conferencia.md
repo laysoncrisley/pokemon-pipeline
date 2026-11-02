@@ -33,3 +33,13 @@ Data da extração da API: 2026-11-02.
 | Relações de dano ANTES do filtro de tipos (sentido *_to) | - | 115 | registro |
 | Relações de dano DEPOIS do filtro: refined.type_damage | 110 | 110 | OK |
 | Relações *_to que não aparecem em *_from, ou o inverso (dentro do escopo) | 0 | 0 | OK |
+| mart_stats_por_tipo: soma de qtd_pokemon (linhas de pokemon_type) | 218 | 218 | OK |
+| mart_top10_total_stats: Pokémon distintos | 10 | 10 | OK |
+| mart_lendarios_vs_comuns: soma de qtd_pokemon | 151 | 151 | OK |
+| mart_fraquezas_por_tipo: soma das relações (linhas de type_damage) | 110 | 110 | OK |
+| mart_habitat: soma de qtd_pokemon | 151 | 151 | OK |
+| mart_habitat: Pokémon na linha 'sem informação' (habitat nulo em refined.species) | 0 | 0 | OK |
+| mart_habilidades_mais_comuns: linhas | 15 | 15 | OK |
+| mart_habilidades_mais_comuns: normal + oculta diferente do total | 0 | 0 | OK |
+| mart_cadeias_evolucao: soma de qtd_pokemon | 151 | 151 | OK |
+| mart_resumo_geral: total_pokemon | 151 | 151 | OK |
