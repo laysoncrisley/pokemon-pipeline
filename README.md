@@ -80,6 +80,13 @@ As imagens não ficam no projeto: `mart_pokedex` guarda as URLs informadas pela 
 
 Os nomes têm só a primeira letra em maiúscula, como o dado da API: aparecem `Mr-mime`, `Nidoran-f` e `Farfetchd`.
 
+## Documentação
+
+- [docs/SPEC.md](docs/SPEC.md): especificação etapa por etapa e como cada etapa foi verificada.
+- [docs/spec/](docs/spec/): prompts originais usados como especificação.
+- [docs/decisoes.md](docs/decisoes.md): motivo de cada decisão sobre o dado.
+- [docs/conferencia.md](docs/conferencia.md): contagens entre as camadas, geradas pelo pipeline.
+
 ## Decisões sobre o dado
 
 O motivo de cada decisão está em [docs/decisoes.md](docs/decisoes.md). As principais:
